@@ -68,7 +68,7 @@ void TextureConverter::SeparateFilePath(const std::wstring& filePath)
 
 	//‹æØ‚è•¶š‚ª‚È‚¢‚Ì‚Åƒtƒ@ƒCƒ‹–¼‚Ì‚İ‚Æ‚µ‚Äˆµ‚¤
 	fileExt_ = L"";
-	exceptExt = filePath;
+	fileName_ = exceptExt;
 }
 
 void TextureConverter::SaveDDSTextureToFile()
