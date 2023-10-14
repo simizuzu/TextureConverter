@@ -1,11 +1,11 @@
 #include "TextureConverter.h"
 
-void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath)
+void TextureConverter::ConvertTextureWICToDDS(const std::string& filePath, int numOptions, char* options[])
 {
 	//テクスチャファイルを読み込む
 	LoadWICTextureFromFile(filePath);
 	//DDS形式に変換して書き出す
-	SaveDDSTextureToFile();
+	SaveDDSTextureToFile(numOptions,options);
 }
 
 void TextureConverter::LoadWICTextureFromFile(const std::string& filePath)
@@ -71,13 +71,25 @@ void TextureConverter::SeparateFilePath(const std::wstring& filePath)
 	fileName_ = exceptExt;
 }
 
-void TextureConverter::SaveDDSTextureToFile()
+void TextureConverter::SaveDDSTextureToFile(int numOptions, char* options[])
 {
 	HRESULT result;
 
+	size_t mipLevel = 0;
+	//ミップマップレベル指定を検索
+	for (int i = 0; i < numOptions; i++)
+	{
+		if (std::string(options[i]) == "-ml")
+		{
+			//ミップレベル指定
+			mipLevel = std::stoi(options[i + 1]);
+			break;
+		}
+	}
+
 	DirectX::ScratchImage mipChain;
 	//ミップマップ生成
-	result = DirectX::GenerateMipMaps(scratchImage_.GetImages(), scratchImage_.GetImageCount(), scratchImage_.GetMetadata(), DirectX::TEX_FILTER_DEFAULT, 0, mipChain);
+	result = DirectX::GenerateMipMaps(scratchImage_.GetImages(), scratchImage_.GetImageCount(), scratchImage_.GetMetadata(), DirectX::TEX_FILTER_DEFAULT, mipLevel, mipChain);
 	if (SUCCEEDED(result))
 	{
 		//イメージとメタデータを、ミップマップ版で置き換える
@@ -97,13 +109,11 @@ void TextureConverter::SaveDDSTextureToFile()
 	//読み込んだテクスチャをSRGBとして扱う
 	metadata_.format = DirectX::MakeSRGB(metadata_.format);
 
-
 	//出力ファイル名を設定する
 	std::wstring filePath = directoryPath_ + fileName_ + L".dds";
 
 	//DDSファイル書き出し
-	result = DirectX::SaveToDDSFile(scratchImage_.GetImages(), scratchImage_.GetImageCount(), metadata_, 
-	DirectX::DDS_FLAGS_NONE, filePath.c_str());
+	result = DirectX::SaveToDDSFile(scratchImage_.GetImages(), scratchImage_.GetImageCount(), metadata_, DirectX::DDS_FLAGS_NONE, filePath.c_str());
 	assert(SUCCEEDED(result));
 }
 
@@ -120,4 +130,13 @@ std::wstring TextureConverter::ConverterMultiByteStringToWideString(const std::s
 	MultiByteToWideChar(CP_ACP, 0, mString.c_str(), -1, &wString[0], filePathBufferSize);
 
 	return wString;
+}
+
+void TextureConverter::OutputUsage()
+{
+	printf("画像ファイルをWIC形式からDDS形式に変換します。\n");
+	printf("\n");
+	printf("TextureConverter [ドライブ:][パス][ファイル名]\n");
+	printf("\n");
+	printf("[ドライブ:][パス][ファイル名]: 変換したいWIC形式の画像ファイルを指定します。\n");
 }

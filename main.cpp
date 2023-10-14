@@ -13,22 +13,32 @@ enum Argument {
 };
 
 int main(int argc, char* argv[]) {
-	assert(argc >= NumArgument);
 
-	//COM ライブラリの初期化
-	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	//コマンドライン引数指定なし
+	if (argc < NumArgument)
+	{
+		//使い方を表示する
+		TextureConverter::OutputUsage();
+		return 0;
+	}
+
+	//COMライブラリの初期化
+	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 	assert(SUCCEEDED(hr));
 
 	//テクスチャコンバータ
 	TextureConverter converter;
 
-	//テクスチャ変換
-	converter.ConvertTextureWICToDDS(argv[FilePath]);
+	//オプションの数
+	int numOptions = argc - NumArgument;
+	//オプション配列(ダブルポインタ)
+	char** options = argv + NumArgument;
 
-	//COM ライブラリの終了
+	//テスクチャ変換
+	converter.ConvertTextureWICToDDS(argv[FilePath], numOptions, options);
+
+	//COMライブラリの終了
 	CoUninitialize();
-
-	system("pause");
 
 	return 0;
 }
